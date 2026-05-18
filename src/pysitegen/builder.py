@@ -325,7 +325,7 @@ def build_document(page_path: Path) -> Document:
 
     document = module.build()
     if not isinstance(document, Document):
-        raise TypeError(f"{page_path} build() must return pysitegen.Document")
+        raise RuntimeError(f"{page_path} build() must return pysitegen.Document")
 
     return document
 
