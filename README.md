@@ -1,0 +1,102 @@
+# PySiteGen
+
+## Python-authored static sites.
+
+PySiteGen is a small static site generator for people who would rather compose HTML with Python without any runtime server, client framework, or hidden build graph. PySiteGen gives you primitives. The default visual taste is just a theme layer with terminal-dark aesthetics. It is practical. You write Python functions that return HTML nodes. PySiteGen renders them to static HTML and copies the assets you explicitly ask for. It produces plain files:
+
+```bash
+public/
+  index.html
+  assets/
+  favicon.png
+  robots.txt
+```
+
+Works for docs sites, small product or project pages, personal sites, link hubs, simple SPA-style hash routes, and static pages that benefit from Python data and composition.
+
+
+## Install
+
+From this repo during development:
+
+```powershell
+python -m pip install -e .\pysitegen
+pysitegen --version
+```
+
+On Linux/macOS from inside the repo:
+
+```bash
+python -m pip install -e .
+pysitegen --version
+```
+
+If `pysitegen` is not found in a new terminal, activate the virtual environment where you installed it:
+
+```bash
+source .venv/bin/activate
+```
+
+## Start A Site
+
+```bash
+pysitegen init my-site
+cd my-site
+pysitegen serve
+```
+
+## A Page
+
+```python
+from pysitegen import a, default_dark, h1, p, page, section
+
+def build():
+    return page(
+        section(
+            p("PySiteGen", class_="eyebrow"),
+            h1("Hello from Python."),
+            p("This is a static page generated from Python primitives.", class_="muted"),
+            a("Read more", href="#more", class_="button primary"),
+            class_="container stack",
+        ),
+        title="Hello",
+        description="A PySiteGen page.",
+        theme=default_dark(),
+    )
+```
+
+Build it and serve it:
+
+```bash
+pysitegen build
+pysitegen serve --host 127.0.0.1 --port 8000
+```
+
+## This Repo
+
+This repository contains the package and the real PySiteGen website:
+
+```text
+src/pysitegen/  package source and bundled framework assets
+website/        PySiteGen website source
+```
+
+Build and Serve:
+
+```bash
+cd website
+pysitegen build
+pysitegen serve --host 127.0.0.1 --port 8000
+```
+
+Do not edit `website/public/` as source.
+
+## Current Limits
+
+PySiteGen is small on purpose.
+
+- The Markdown parser is intentionally limited.
+- There is no template/layout system yet.
+- There is no plugin system.
+- The default theme is useful, not universal.
+- The API is still young.
