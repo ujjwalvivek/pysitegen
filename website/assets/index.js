@@ -70,3 +70,66 @@ demoToggles.forEach((toggle) => {
         });
     });
 });
+
+const docsScroller = document.querySelector(".site-main");
+const tocLinks = [...document.querySelectorAll(".docs-toc .toc-link")];
+const docsHeadings = tocLinks
+    .map((link) => {
+        const id = decodeURIComponent(link.hash.slice(1));
+        return id ? document.getElementById(id) : null;
+    })
+    .filter(Boolean);
+
+let tocFrame = 0;
+
+function setActiveToc(id) {
+    tocLinks.forEach((link) => {
+        const active = decodeURIComponent(link.hash.slice(1)) === id;
+        link.classList.toggle("active", active);
+        if (active) {
+            link.setAttribute("aria-current", "location");
+        } else {
+            link.removeAttribute("aria-current");
+        }
+    });
+}
+
+function updateActiveToc() {
+    tocFrame = 0;
+    if (!docsScroller || !docsHeadings.length) return;
+    if (document.body.dataset.route !== "docs") return;
+
+    const scrollerTop = docsScroller.getBoundingClientRect().top;
+    const threshold = scrollerTop + 96;
+    let active = docsHeadings[0];
+
+    docsHeadings.forEach((heading) => {
+        if (heading.getBoundingClientRect().top <= threshold) {
+            active = heading;
+        }
+    });
+
+    setActiveToc(active.id);
+}
+
+function requestTocUpdate() {
+    if (tocFrame) return;
+    tocFrame = window.requestAnimationFrame(updateActiveToc);
+}
+
+if (docsScroller && tocLinks.length) {
+    docsScroller.addEventListener("scroll", requestTocUpdate, { passive: true });
+    window.addEventListener("resize", requestTocUpdate);
+    window.addEventListener("hashchange", requestTocUpdate);
+    new MutationObserver(requestTocUpdate).observe(document.body, {
+        attributes: true,
+        attributeFilter: ["data-route"],
+    });
+    tocLinks.forEach((link) => {
+        link.addEventListener("click", () => {
+            const id = decodeURIComponent(link.hash.slice(1));
+            if (id) setActiveToc(id);
+        });
+    });
+    requestTocUpdate();
+}

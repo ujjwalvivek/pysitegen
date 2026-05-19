@@ -346,6 +346,7 @@ body {
     font-size: clamp(0.72rem, 0.78vw, 0.9rem);
     line-height: 1.45;
     color: var(--soft);
+    letter-spacing: -0.5px;
 }
 
 .copy-svg {
@@ -502,6 +503,18 @@ body {
 
 .docs-toc {
     border: 2px dashed var(--line);
+}
+
+.docs-toc .toc-link.active,
+.docs-toc .toc-link[aria-current="location"] {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.docs-toc .toc-link.active::before,
+.docs-toc .toc-link[aria-current="location"]::before {
+    content: "> ";
+    margin-left: 0.4rem;
 }
 
 .docs-content {

@@ -24,6 +24,7 @@ from pysitegen import (
     visual_canvas,
     visual_scene,
 )
+from pysitegen.md import highlight_code
 
 ROOT = Path(__file__).resolve().parent
 ASSETS = ROOT / "assets"
@@ -243,7 +244,11 @@ def workbench():
             ),
             tag(
                 "pre",
-                tag("code", demo_code()),
+                tag(
+                    "code",
+                    highlight_code(demo_code(), "python"),
+                    class_="language-python has-highlight",
+                ),
                 class_="hero-code",
             ),
             class_="code-pane",
@@ -405,7 +410,7 @@ def build():
             footer(class_="site-footer"),
             class_="pysitegen-site",
         ),
-        title="pysitegen",
+        title="PySiteGen - Tiny Python Static Site Generator",
         description="Python-authored static sites with terminal-styled primitives.",
         head=[tag("link", rel="icon", type="image/png", href="/favicon.png")],
         theme=default_dark(),
