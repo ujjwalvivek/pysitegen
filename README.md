@@ -61,6 +61,28 @@ pysitegen serve --host 127.0.0.1 --port 8000
 
 Use `pysitegen serve --no-reload` when you want the plain static server.
 
+## Optional Visual Runtime
+
+PySiteGen can load the [!Substrate](https://github.com/ujjwalvivek/substrate) canvas engine from the CDN for procedural backgrounds. It is not part of the default theme and is only loaded when a page opts in with `canvas_background()`.
+
+```python
+from pysitegen import canvas_background, page, visual_canvas, visual_scene
+
+scene = visual_scene(
+    "background",
+    ("grid", {"spacing": 96}),
+    ("nodes", {"count": 24}),
+)
+
+page(
+    visual_canvas(scene, id="hero-canvas", fps=0, class_="hero-visual"),
+    title="Visual",
+    behaviors=[canvas_background()],
+)
+```
+
+This feature requires the generated page to be online when it loads, because the canvas engine is fetched from the CDN.
+
 ## This Repo
 
 This repository contains the package source, tests, and the real PySiteGen website:

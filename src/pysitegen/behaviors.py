@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .components import Asset
+from .components import Asset, Node
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
@@ -14,6 +14,7 @@ class Behavior:
     assets: list[Asset] = field(default_factory=list)
     scripts: list[str] = field(default_factory=list)
     module_scripts: list[str] = field(default_factory=list)
+    head: list[Node] = field(default_factory=list)
 
 
 def spa() -> Behavior:

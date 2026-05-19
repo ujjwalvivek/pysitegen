@@ -28,6 +28,7 @@ def page(
     page_stylesheets = list(stylesheets)
     page_scripts = list(scripts)
     page_module_scripts = list(module_scripts)
+    page_head = list(head)
 
     if theme:
         page_assets = [*theme.assets, *page_assets]
@@ -37,6 +38,7 @@ def page(
         page_assets = [*behavior.assets, *page_assets]
         page_scripts = [*behavior.scripts, *page_scripts]
         page_module_scripts = [*behavior.module_scripts, *page_module_scripts]
+        page_head = [*behavior.head, *page_head]
 
     return Document(
         title=title,
@@ -47,7 +49,7 @@ def page(
         stylesheets=page_stylesheets,
         scripts=page_scripts,
         module_scripts=page_module_scripts,
-        head=list(head),
+        head=page_head,
     )
 
 

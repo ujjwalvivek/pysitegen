@@ -9,6 +9,9 @@ def test_root_package_exports_authoring_api_only() -> None:
     assert "asset" in pysitegen.__all__
     assert "default_dark" in pysitegen.__all__
     assert "spa" in pysitegen.__all__
+    assert "canvas_background" in pysitegen.__all__
+    assert "visual_canvas" in pysitegen.__all__
+    assert "visual_scene" in pysitegen.__all__
     assert "markdown_file" in pysitegen.__all__
 
     assert "build" not in pysitegen.__all__

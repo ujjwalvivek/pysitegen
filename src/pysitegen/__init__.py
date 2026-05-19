@@ -27,6 +27,7 @@ from .elements import (
 )
 from .md import Heading, MarkdownDocument, markdown_file, markdown_text, markdown_toc
 from .theme import Theme, default_dark
+from .visual import canvas_background, visual_canvas, visual_scene
 
 __all__ = [
     "Asset",
@@ -40,6 +41,7 @@ __all__ = [
     "asset",
     "button",
     "canvas",
+    "canvas_background",
     "div",
     "footer",
     "h1",
@@ -62,6 +64,8 @@ __all__ = [
     "spa",
     "tag",
     "ul",
+    "visual_canvas",
+    "visual_scene",
     "Theme",
     "default_dark",
 ]

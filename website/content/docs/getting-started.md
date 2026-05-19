@@ -304,6 +304,58 @@ The behavior:
 - Scrolls the active panel into view
 - Accounts for sticky nav height using `data_sticky_nav`
 
+## Visual Canvas
+
+pysitegen can render procedural canvas scenes from Python-authored scene data. The Python side describes the scene. The Substrate runtime is loaded from the CDN only when `canvas_background()` is used. This keeps generated projects small, but pages using this behavior need network access when they load.
+
+```python
+
+from pysitegen import canvas_background, page, visual_canvas, visual_scene
+
+scene = visual_scene(
+    "background",
+    ("grid", {"spacing": 96, "opacity": 0.35}),
+    ("nodes", {"count": 24, "opacity": 0.8}),
+    ("vignette", {"opacity": 0.7}),
+)
+
+page(
+    visual_canvas(scene, id="hero-canvas", fps=0, class_="hero-visual"),
+    title="Visual",
+    behaviors=[canvas_background()],
+)
+```
+
+The canvas is explicit so your CSS controls size and placement:
+
+```css
+
+.hero-visual {
+  display: block;
+  width: 100%;
+  height: 420px;
+}
+```
+
+Built-in primitives:
+
+- `background`
+- `grid`
+- `scanlines`
+- `particles`
+- `nodes`
+- `wireframes`
+- `branches`
+- `mandala`
+- `streams`
+- `glitch`
+- `vignette`
+- `foam`
+- `hyperstring`
+- `topography`
+
+Animation is opt-in. `fps=0` renders a static frame. Positive values animate at that target frame rate, and the runtime falls back to static rendering when the visitor prefers reduced motion.
+
 ## Markdown Documents
 
 pysitegen can render Markdown into `Node` trees. Markdown content still goes through the same renderer, escaping, theme, and asset pipeline.
@@ -403,7 +455,19 @@ Import from the public package facade:
 
 ```python
 
-from pysitegen import page, section, h1, p, a, asset, default_dark, spa
+from pysitegen import (
+    page,
+    section,
+    h1,
+    p,
+    a,
+    asset,
+    default_dark,
+    spa,
+    visual_scene,
+    visual_canvas,
+    canvas_background,
+)
 ```
 
 Avoid importing from internal modules such as `pysitegen.theme`, `pysitegen.md`, `pysitegen.renderer`, or `pysitegen.builder` in normal site code. Those modules exist, but the package root is the stable authoring surface. Use the `pysitegen` CLI for build, serve, init, and compile workflows.
@@ -519,6 +583,35 @@ page(
     behaviors=[spa()],
 )
 ```
+
+`visual_scene(*layers) -> Scene`
+
+Creates serializable scene data for the Substrate canvas runtime. A layer can be a primitive name or a `(primitive, options)` tuple.
+
+```python
+
+from pysitegen import visual_scene
+
+scene = visual_scene(
+    "background",
+    ("grid", {"spacing": 120}),
+)
+```
+
+`visual_canvas(scene, *, id: str, fps: int = 0, palette=None, **attrs) -> Node`
+
+Creates a `<canvas>` with the scene stored as HTML data attributes. Pass normal HTML attributes such as `class_`, `aria_label`, or `data_*` as keyword arguments.
+
+```python
+
+from pysitegen import visual_canvas
+
+visual_canvas(scene, id="hero-canvas", fps=30, class_="hero-visual")
+```
+
+`canvas_background(runtime: str = "https://cdn.ujjwalvivek.com/scripts/substrate/latest/main.js") -> Behavior`
+
+Adds a tiny module adapter that imports the Substrate runtime from the CDN and binds every `visual_canvas(...)` on the page. Use it in `behaviors=[...]` on any page that contains a `visual_canvas(...)`.
 
 ### Markdown
 

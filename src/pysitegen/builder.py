@@ -9,6 +9,7 @@ import shutil
 import sys
 import threading
 import time
+import tomllib
 import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
@@ -206,6 +207,13 @@ def run_command(args: argparse.Namespace, parser: argparse.ArgumentParser) -> No
 
 
 def package_version() -> str:
+    pyproject_path = PACKAGE_ROOT.parents[1] / "pyproject.toml"
+    if pyproject_path.exists():
+        pyproject = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+        project = pyproject.get("project", {})
+        if project.get("name") == "pysitegen" and isinstance(project.get("version"), str):
+            return project["version"]
+
     try:
         return importlib.metadata.version("pysitegen")
     except importlib.metadata.PackageNotFoundError:
