@@ -1,15 +1,7 @@
-## PySiteGen v1.2.0
+## PySiteGen v1.2.1
 
-### Highlights
-
-- Fixed local source-tree `--version` behavior so it reads the project version from `pyproject.toml`.
-- Added visual scene helpers:
-  - `visual_scene(...)`
-  - `visual_canvas(...)`
-  - `canvas_background(...)`
-- `canvas_background()` now loads the Substrate runtime from CDN only when a page opts in. No large canvas runtime is bundled.
-- Added docs and tests for the visual canvas API.
-- Canvas scenes support Substrate primitives such as `background`, `grid`, `particles`, `nodes`, `streams`, `scanlines`, `topography`, `vignette`, and [!more](https://cdn.ujjwalvivek.com/scripts/substrate/latest/readme.md).
+- updated docs. thats it. 
+- needed to push the new readme to PyPi
 
 ### Install
 
