@@ -7,6 +7,7 @@
 - Served HTML gets a temporary EventSource reload script injected at request time, so generated files on disk stay clean.
 - Added `pysitegen serve --no-reload` for the old plain static server behavior.
 - Clears cached project modules before builds so changed helper imports are picked up.
+- Table of contents can now collapse for smaller screens.
 
 ### Install
 
