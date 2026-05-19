@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, cast
+
+import pysitegen.builder as builder
 
 from conftest import assert_failure, assert_success, run_pysitegen, write_file
-from pysitegen.builder import inject_live_reload, snapshot_project
 
 
 def test_compile_succeeds_and_removes_pycache(tmp_path: Path) -> None:
@@ -41,6 +43,8 @@ def test_serve_help_mentions_no_reload(tmp_path: Path) -> None:
 def test_live_reload_script_injects_before_body() -> None:
     html = "<!doctype html><html><body><h1>Hello</h1></body></html>"
 
+    inject_live_reload = cast(Any, getattr(builder, "inject_live_reload"))
+
     result = inject_live_reload(html)
 
     assert 'new EventSource("/__pysitegen/reload")' in result
@@ -51,6 +55,8 @@ def test_watch_snapshot_ignores_public_output(tmp_path: Path) -> None:
     write_file(tmp_path / "index.py", "def build():\n    pass\n")
     write_file(tmp_path / "assets" / "index.css", "body {}\n")
     write_file(tmp_path / "public" / "index.html", "<h1>Generated</h1>\n")
+
+    snapshot_project = cast(Any, getattr(builder, "snapshot_project"))
 
     snapshot = snapshot_project(tmp_path, tmp_path / "public")
 

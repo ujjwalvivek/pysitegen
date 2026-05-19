@@ -2,10 +2,87 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from html import escape
 from pathlib import Path
+from typing import Any, cast
 
+from . import components as _components
 from .components import Node
 from .elements import a, h1, h2, h3, li, p, tag, ul
+
+
+PYTHON_KEYWORDS = {
+    "False",
+    "None",
+    "True",
+    "and",
+    "as",
+    "assert",
+    "async",
+    "await",
+    "break",
+    "class",
+    "continue",
+    "def",
+    "del",
+    "elif",
+    "else",
+    "except",
+    "finally",
+    "for",
+    "from",
+    "global",
+    "if",
+    "import",
+    "in",
+    "is",
+    "lambda",
+    "nonlocal",
+    "not",
+    "or",
+    "pass",
+    "raise",
+    "return",
+    "try",
+    "while",
+    "with",
+    "yield",
+}
+PYTHON_BUILTINS = {
+    "Path",
+    "False",
+    "None",
+    "True",
+    "dict",
+    "float",
+    "int",
+    "list",
+    "set",
+    "str",
+    "tuple",
+}
+BASH_COMMANDS = {
+    "cd",
+    "pip",
+    "pysitegen",
+    "python",
+}
+PYTHON_TOKEN_RE = re.compile(
+    r"(?P<comment>#.*$)"
+    r"|(?P<string>\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*')"
+    r"|(?P<number>\b\d+(?:\.\d+)?\b)"
+    r"|(?P<decorator>@[A-Za-z_][A-Za-z0-9_]*)"
+    r"|(?P<name>\b[A-Za-z_][A-Za-z0-9_]*\b)"
+    r"|(?P<operator>[()[\]{}.,:=+\-*/%<>!|&]+)"
+)
+BASH_TOKEN_RE = re.compile(
+    r"(?P<comment>#.*$)"
+    r"|(?P<string>\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*')"
+    r"|(?P<option>(?<!\S)--?[A-Za-z0-9][A-Za-z0-9_-]*)"
+    r"|(?P<variable>\$[A-Za-z_][A-Za-z0-9_]*)"
+    r"|(?P<word>[A-Za-z_./][A-Za-z0-9_./-]*)"
+    r"|(?P<operator>[|&;=<>]+)"
+)
 
 
 @dataclass(frozen=True)
@@ -30,19 +107,46 @@ def markdown_text(text: str) -> MarkdownDocument:
     return parser.parse()
 
 
-def markdown_toc(document: MarkdownDocument, title: str = "On this page") -> Node:
+def markdown_toc(
+    document: MarkdownDocument,
+    title: str = "On this page",
+    collapsible: bool = False,
+    open: bool = False,
+) -> Node:
+    toc_list = markdown_toc_list(document)
+    if collapsible:
+        return tag(
+            "aside",
+            p(title, class_="eyebrow docs-toc-desktop-title"),
+            markdown_toc_list(document, class_name="docs-toc-list docs-toc-desktop-list"),
+            tag(
+                "details",
+                tag("summary", title, class_="docs-toc-summary"),
+                markdown_toc_list(document, class_name="docs-toc-list docs-toc-mobile-list"),
+                class_="docs-toc-details",
+                open=open,
+            ),
+            class_="docs-toc collapsible",
+        )
+
+    return tag(
+        "aside",
+        p(title, class_="eyebrow"),
+        toc_list,
+        class_="docs-toc",
+    )
+
+
+def markdown_toc_list(
+    document: MarkdownDocument,
+    class_name: str = "docs-toc-list",
+) -> Node:
     items = [
         li(a(heading.text, href=f"#{heading.slug}", class_=f"toc-link level-{heading.level}"))
         for heading in document.headings
         if heading.level in {2, 3}
     ]
-
-    return tag(
-        "aside",
-        p(title, class_="eyebrow"),
-        ul(items, class_="docs-toc-list"),
-        class_="docs-toc",
-    )
+    return ul(items, class_=class_name)
 
 
 class MarkdownParser:
@@ -118,8 +222,9 @@ class MarkdownParser:
         if self.index < len(self.lines):
             self.index += 1
 
-        attrs = {"class": f"language-{language}"} if language else {}
-        return tag("pre", tag("code", "\n".join(code_lines), **attrs))
+        code = "\n".join(code_lines)
+        attrs = {"class": code_class(language)} if language else {}
+        return tag("pre", tag("code", highlight_code(code, language), **attrs))
 
     def parse_list(self, ordered: bool) -> Node:
         items: list[Node] = []
@@ -211,3 +316,149 @@ class MarkdownParser:
         if count:
             return f"{base}-{count + 1}"
         return base
+
+
+def code_class(language: str) -> str:
+    normalized = normalize_language(language)
+    classes = [f"language-{normalized or language}"]
+    if normalized in {"bash", "html", "python"}:
+        classes.append("has-highlight")
+    return " ".join(classes)
+
+
+def highlight_code(code: str, language: str) -> Any:
+    normalized = normalize_language(language)
+    if normalized == "python":
+        return raw_html(highlight_lines(code, highlight_python_line))
+    if normalized == "bash":
+        return raw_html(highlight_lines(code, highlight_bash_line))
+    if normalized == "html":
+        return raw_html(highlight_html(code))
+    return raw_html(escape(code, quote=False))
+
+
+def raw_html(html: str) -> Any:
+    return cast(Any, getattr(_components, "RawHtml"))(html)
+
+
+def normalize_language(language: str) -> str:
+    value = language.lower().strip()
+    aliases = {
+        "console": "bash",
+        "html": "html",
+        "py": "python",
+        "python": "python",
+        "sh": "bash",
+        "shell": "bash",
+        "zsh": "bash",
+    }
+    return aliases.get(value, value)
+
+
+def highlight_lines(code: str, highlighter) -> str:
+    return "\n".join(highlighter(line) for line in code.split("\n"))
+
+
+def highlight_python_line(line: str) -> str:
+    return highlight_regex_line(line, PYTHON_TOKEN_RE, python_token_class)
+
+
+def python_token_class(kind: str, value: str, line: str, end: int) -> str | None:
+    if kind == "comment":
+        return "tok-comment"
+    if kind == "string":
+        return "tok-string"
+    if kind == "number":
+        return "tok-number"
+    if kind == "decorator":
+        return "tok-decorator"
+    if kind == "operator":
+        return "tok-operator"
+    if kind == "name":
+        if value in PYTHON_KEYWORDS:
+            return "tok-keyword"
+        if value in PYTHON_BUILTINS:
+            return "tok-builtin"
+        if next_nonspace(line, end) == "(":
+            return "tok-call"
+    return None
+
+
+def highlight_bash_line(line: str) -> str:
+    first_word = True
+
+    def token_class(kind: str, value: str, current_line: str, end: int) -> str | None:
+        nonlocal first_word
+        if kind == "comment":
+            return "tok-comment"
+        if kind == "string":
+            return "tok-string"
+        if kind == "option":
+            return "tok-option"
+        if kind == "variable":
+            return "tok-variable"
+        if kind == "operator":
+            return "tok-operator"
+        if kind == "word":
+            if first_word or value in BASH_COMMANDS:
+                first_word = False
+                return "tok-command"
+            first_word = False
+        return None
+
+    return highlight_regex_line(line, BASH_TOKEN_RE, token_class)
+
+
+def highlight_html(code: str) -> str:
+    pattern = re.compile(
+        r"(?P<comment><!--.*?-->)"
+        r"|(?P<tag></?[\w:-]+)"
+        r"|(?P<attr>\b[\w:-]+)(?=\=)"
+        r"|(?P<string>\"[^\"]*\"|'[^']*')"
+        r"|(?P<bracket>/?>)",
+        re.DOTALL,
+    )
+    class_map = {
+        "comment": "tok-comment",
+        "tag": "tok-keyword",
+        "attr": "tok-attribute",
+        "string": "tok-string",
+        "bracket": "tok-operator",
+    }
+    return highlight_regex_line(
+        code,
+        pattern,
+        lambda kind, value, line, end: class_map.get(kind),
+    )
+
+
+def highlight_regex_line(line: str, pattern: re.Pattern[str], classifier) -> str:
+    parts: list[str] = []
+    cursor = 0
+
+    for match in pattern.finditer(line):
+        if match.start() > cursor:
+            parts.append(escape(line[cursor : match.start()], quote=False))
+
+        value = match.group(0)
+        kind = match.lastgroup or ""
+        class_name = classifier(kind, value, line, match.end())
+        escaped = escape(value, quote=False)
+        if class_name:
+            parts.append(f'<span class="{class_name}">{escaped}</span>')
+        else:
+            parts.append(escaped)
+
+        cursor = match.end()
+
+    if cursor < len(line):
+        parts.append(escape(line[cursor:], quote=False))
+
+    return "".join(parts)
+
+
+def next_nonspace(line: str, start: int) -> str:
+    for char in line[start:]:
+        if not char.isspace():
+            return char
+    return ""

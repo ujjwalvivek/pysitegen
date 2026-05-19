@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import Iterable
 
 from .behaviors import Behavior
-from .components import Asset, Document, Node, flatten
+from .components import Asset, Document, Node, RawHtml, flatten
 from .theme import Theme
 
 
-Child = Node | str | Iterable[Node | str]
+Child = Node | RawHtml | str | Iterable[Node | RawHtml | str]
 AttrValue = str | int | float | bool | None
 
 

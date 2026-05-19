@@ -530,9 +530,11 @@ Reads a Markdown file and returns a `MarkdownDocument` with `nodes` and `heading
 
 Parses a Markdown string and returns a `MarkdownDocument`.
 
-`markdown_toc(document, title="On this page")`
+`markdown_toc(document, title="On this page", collapsible=False, open=False)`
 
 Builds a table of contents from level-2 and level-3 headings.
+
+Use `collapsible=True` for a TOC that stays visible on desktop and collapses on smaller screens. Set `open=True` when the mobile TOC should start expanded.
 
 ```python
 
@@ -541,7 +543,7 @@ from pysitegen import article, markdown_file, markdown_toc, section
 doc = markdown_file("content/docs/getting-started.md")
 
 section(
-    markdown_toc(doc),
+    markdown_toc(doc, collapsible=True),
     article(doc.nodes, class_="docs-content"),
     class_="docs-layout",
 )
@@ -599,16 +601,6 @@ pysitegen/
     static/
 ```
 
-The website is intentionally just another PySiteGen consumer. It imports from `pysitegen` like any other site.
+## What now?
 
-## Where To Go Next
-
-Useful next improvements:
-
-- A richer Markdown parser
-- Automatic code highlighting
-- Browser screenshot verification
-- Better build configuration
-- More behaviors for tabs, accordions, and copy buttons
-
-The current version is small on purpose. It is a foundation for testing how far Python-authored websites can go while still producing normal static files.
+The website is intentionally just another PySiteGen consumer. It imports from `pysitegen` like any other site. The current version is small on purpose. It is a foundation for testing how far Python-authored websites can go while still producing normal static files.

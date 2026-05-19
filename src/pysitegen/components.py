@@ -32,10 +32,15 @@ class Asset:
     target: str
 
 
+@dataclass(frozen=True)
+class RawHtml:
+    html: str
+
+
 @dataclass
 class Node:
     tag: str
-    children: list[Node | str] = field(default_factory=list)
+    children: list[Node | RawHtml | str] = field(default_factory=list)
     attrs: Attrs = field(default_factory=dict)
 
     def render(self, indent: int = 0) -> str:
@@ -52,6 +57,9 @@ class Node:
             text = escape(self.children[0], quote=False)
             return f"{pad}<{self.tag}{attrs}>{text}</{self.tag}>"
 
+        if len(self.children) == 1 and isinstance(self.children[0], RawHtml):
+            return f"{pad}<{self.tag}{attrs}>{self.children[0].html}</{self.tag}>"
+
         rendered_children = "\n".join(_render_child(child, indent + 2) for child in self.children)
         return f"{pad}<{self.tag}{attrs}>\n{rendered_children}\n{pad}</{self.tag}>"
 
@@ -59,7 +67,7 @@ class Node:
 @dataclass
 class Document:
     title: str
-    body: list[Node | str]
+    body: list[Node | RawHtml | str]
     assets: list[Asset] = field(default_factory=list)
     lang: str = "en"
     description: str | None = None
@@ -69,7 +77,7 @@ class Document:
     head: list[Node] = field(default_factory=list)
 
     def render(self) -> str:
-        head_nodes: list[Node | str] = [
+        head_nodes: list[Node | RawHtml | str] = [
             Node("meta", attrs={"charset": "UTF-8"}),
             Node("meta", attrs={"name": "viewport", "content": "width=device-width, initial-scale=1.0"}),
             Node("title", [self.title]),
@@ -81,7 +89,7 @@ class Document:
         head_nodes.extend(Node("link", attrs={"rel": "stylesheet", "href": href}) for href in self.stylesheets)
         head_nodes.extend(self.head)
 
-        body_nodes: list[Node | str] = list(self.body)
+        body_nodes: list[Node | RawHtml | str] = list(self.body)
         body_nodes.extend(Node("script", attrs={"src": src, "defer": True}) for src in self.scripts)
         body_nodes.extend(Node("script", attrs={"type": "module", "src": src}) for src in self.module_scripts)
 
@@ -97,11 +105,11 @@ class Document:
         return "<!DOCTYPE html>\n" + html.render() + "\n"
 
 
-def tag(tag_name: str, *children: Node | str, **attrs: str | int | float | bool | None) -> Node:
+def tag(tag_name: str, *children: Node | RawHtml | str, **attrs: str | int | float | bool | None) -> Node:
     return Node(tag_name, list(children), attrs)
 
 
-def div(*children: Node | str, **attrs: str | int | float | bool | None) -> Node:
+def div(*children: Node | RawHtml | str, **attrs: str | int | float | bool | None) -> Node:
     return tag("div", *children, **attrs)
 
 
@@ -112,19 +120,22 @@ def text_node(tag_name: str, text: str, class_name: str | None = None) -> Node:
     return Node(tag_name, [text], attrs)
 
 
-def flatten(nodes: Iterable[Node | str | Iterable[Node | str]]) -> list[Node | str]:
-    result: list[Node | str] = []
+def flatten(nodes: Iterable[Node | RawHtml | str | Iterable[Node | RawHtml | str]]) -> list[Node | RawHtml | str]:
+    result: list[Node | RawHtml | str] = []
     for node in nodes:
-        if isinstance(node, Node) or isinstance(node, str):
+        if isinstance(node, Node) or isinstance(node, RawHtml) or isinstance(node, str):
             result.append(node)
         else:
             result.extend(flatten(node))
     return result
 
 
-def _render_child(child: Node | str, indent: int) -> str:
+def _render_child(child: Node | RawHtml | str, indent: int) -> str:
     if isinstance(child, Node):
         return child.render(indent)
+
+    if isinstance(child, RawHtml):
+        return " " * indent + child.html
 
     return " " * indent + escape(child, quote=False)
 

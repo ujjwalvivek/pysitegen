@@ -261,6 +261,40 @@ pre {
     border: 1px solid var(--line);
 }
 
+.has-highlight .tok-keyword,
+.has-highlight .tok-command {
+    color: var(--accent);
+    font-weight: 800;
+}
+
+.has-highlight .tok-string {
+    color: #9fd18b;
+}
+
+.has-highlight .tok-comment {
+    color: var(--dim);
+}
+
+.has-highlight .tok-number,
+.has-highlight .tok-builtin,
+.has-highlight .tok-variable {
+    color: #8fc9ff;
+}
+
+.has-highlight .tok-call,
+.has-highlight .tok-attribute {
+    color: #ffd38f;
+}
+
+.has-highlight .tok-option,
+.has-highlight .tok-decorator {
+    color: #ff9f8b;
+}
+
+.has-highlight .tok-operator {
+    color: var(--muted);
+}
+
 .docs-layout {
     display: grid;
     grid-template-columns: minmax(200px, 0.2fr) minmax(0, 0.8fr);
@@ -288,6 +322,30 @@ pre {
 
 .docs-toc-list li {
     margin: 0;
+}
+
+.docs-toc.collapsible {
+    padding: var(--space-3);
+}
+
+.docs-toc-details {
+    display: none;
+}
+
+.docs-toc-summary {
+    display: none;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.docs-toc-summary::marker,
+.docs-toc-summary::-webkit-details-marker {
+    display: none;
+    content: "";
 }
 
 .toc-link {
@@ -388,6 +446,43 @@ pre {
 
     .docs-toc {
         position: static;
+    }
+
+    .docs-toc.collapsible {
+        padding: 0;
+    }
+
+    .docs-toc.collapsible .docs-toc-desktop-title,
+    .docs-toc.collapsible .docs-toc-desktop-list {
+        display: none;
+    }
+
+    .docs-toc.collapsible .docs-toc-details {
+        display: block;
+        padding: 0;
+    }
+
+    .docs-toc.collapsible .docs-toc-summary {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 var(--space-3);
+    }
+
+    .docs-toc.collapsible .docs-toc-summary::after {
+        content: "+";
+        color: var(--muted);
+    }
+
+    .docs-toc.collapsible .docs-toc-details[open] .docs-toc-summary::after {
+        content: "-";
+        color: var(--accent);
+    }
+
+    .docs-toc.collapsible .docs-toc-list {
+        margin: 0;
+        padding: 0 var(--space-3) var(--space-3);
     }
 
     .docs-content {
