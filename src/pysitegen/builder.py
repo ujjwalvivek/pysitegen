@@ -209,7 +209,7 @@ def package_version() -> str:
     try:
         return importlib.metadata.version("pysitegen")
     except importlib.metadata.PackageNotFoundError:
-        return "0.1.0"
+        return "1.0.0"
 
 
 def load_config(path: str | Path | None = None) -> SiteConfig:

@@ -1,0 +1,9 @@
+{
+    "file_scan_exclusions": [
+        "**/.git",
+        "**/*_cache",
+        "**/*venv",
+        "**/dist",
+        "**/**pycache**"
+    ]
+}

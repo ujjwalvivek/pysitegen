@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import tomllib
 from pathlib import Path
 from typing import Any, cast
 
 import pysitegen.builder as builder
 
-from conftest import assert_failure, assert_success, run_pysitegen, write_file
+from conftest import REPO_ROOT, assert_failure, assert_success, run_pysitegen, write_file
 
 
 def test_compile_succeeds_and_removes_pycache(tmp_path: Path) -> None:
@@ -28,9 +29,11 @@ def build():
 
 def test_version_works(tmp_path: Path) -> None:
     result = run_pysitegen(tmp_path, "--version")
+    pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    version = pyproject["project"]["version"]
 
     assert_success(result)
-    assert "0.1.0" in result.stdout
+    assert version in result.stdout
 
 
 def test_serve_help_mentions_no_reload(tmp_path: Path) -> None:

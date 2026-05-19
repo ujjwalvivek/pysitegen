@@ -1,13 +1,14 @@
-## PySiteGen v1.0.0
+## PySiteGen v1.1.0
 
 ### Highlights
 
-- pysitegen serve` now builds once, watches the site folder, rebuilds on changes, and reloads the browser automatically.
-- It ignores generated output like `public/`, plus `.venv`, `.git`, `__pycache__`, cache dirs, etc.
-- Served HTML gets a temporary EventSource reload script injected at request time, so generated files on disk stay clean.
-- Added `pysitegen serve --no-reload` for the old plain static server behavior.
-- Clears cached project modules before builds so changed helper imports are picked up.
-- Table of contents can now collapse for smaller screens.
+- Tightened the root `pysitegen` public API.
+  - The root package now focuses on the authoring facade: page primitives, assets, themes, behaviors, and Markdown helpers.
+  - Builder/render helpers are no longer exported from the root package.
+  - CLI commands remain the supported build/serve/init/compile workflow.
+- Updated API documentation with clearer, typed signatures for stable authoring helpers.
+- Updated starter/docs guidance around `pysitegen serve`.
+- Added tests for root public API boundaries
 
 ### Install
 

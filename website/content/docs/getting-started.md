@@ -403,14 +403,14 @@ Import from the public package facade:
 
 ```python
 
-from pysitegen import page, section, h1, p, a, asset, default_dark
+from pysitegen import page, section, h1, p, a, asset, default_dark, spa
 ```
 
-Avoid importing from internal modules such as `pysitegen.theme`, `pysitegen.md`, or `pysitegen.renderer` in normal site code. Those modules exist, but the package root is the stable authoring surface.
+Avoid importing from internal modules such as `pysitegen.theme`, `pysitegen.md`, `pysitegen.renderer`, or `pysitegen.builder` in normal site code. Those modules exist, but the package root is the stable authoring surface. Use the `pysitegen` CLI for build, serve, init, and compile workflows.
 
 ### Page And Document
 
-`page(*body, title, description=None, lang="en", assets=(), stylesheets=(), scripts=(), module_scripts=(), behaviors=(), head=(), theme=None)`
+`page(*body, title: str, description: str | None = None, lang: str = "en", assets=(), stylesheets=(), scripts=(), module_scripts=(), behaviors=(), head=(), theme: Theme | None = None) -> Document`
 
 Creates a `Document`. A page module should return this from `build()`.
 
@@ -432,7 +432,7 @@ The object returned by `page(...)`. The builder expects every page module's `bui
 
 ### HTML Primitives
 
-`div(...)`, `section(...)`, `article(...)`, `main(...)`, `nav(...)`, `h1(...)`, `h2(...)`, `h3(...)`, `p(...)`, `a(...)`, `button(...)`, `img(...)`, `ul(...)`, `li(...)`, `span(...)`
+`div(*children, **attrs) -> Node`, `section(*children, **attrs) -> Node`, `article(*children, **attrs) -> Node`, `main(*children, **attrs) -> Node`, `nav(*children, **attrs) -> Node`, `h1(*children, **attrs) -> Node`, `h2(*children, **attrs) -> Node`, `h3(*children, **attrs) -> Node`, `p(*children, **attrs) -> Node`, `a(*children, **attrs) -> Node`, `button(*children, **attrs) -> Node`, `canvas(**attrs) -> Node`, `footer(*children, **attrs) -> Node`, `header(*children, **attrs) -> Node`, `hr(**attrs) -> Node`, `img(**attrs) -> Node`, `li(*children, **attrs) -> Node`, `script(*children, **attrs) -> Node`, `span(*children, **attrs) -> Node`, `ul(*children, **attrs) -> Node`
 
 Convenience helpers for common HTML tags. Children come first. Attributes are keyword arguments.
 
@@ -448,7 +448,7 @@ section(
 )
 ```
 
-`tag(tag_name, *children, **attrs)`
+`tag(tag_name: str, *children, **attrs) -> Node`
 
 Creates any HTML element when there is no dedicated helper.
 
@@ -469,7 +469,7 @@ Attribute names are normalized:
 
 ### Assets
 
-`asset(source, target)`
+`asset(source: str | Path, target: str) -> Asset`
 
 Registers a file to copy during rendering. `source` is the file on disk. `target` is the path inside the generated output directory.
 
@@ -491,7 +491,7 @@ Use `static/` for files that should copy directly to the root of `public/`, such
 
 ### Theme And Behavior
 
-`default_dark()`
+`default_dark() -> Theme`
 
 Returns the bundled terminal-dark theme. It adds `pysitegen.css` to the page asset list and stylesheet list.
 
@@ -502,7 +502,7 @@ from pysitegen import default_dark, page
 page(..., title="Themed", theme=default_dark())
 ```
 
-`spa()`
+`spa() -> Behavior`
 
 Adds hash-route behavior and copies the bundled `pysitegen-spa.js` script.
 
@@ -522,15 +522,15 @@ page(
 
 ### Markdown
 
-`markdown_file(path)`
+`markdown_file(path: str | Path) -> MarkdownDocument`
 
 Reads a Markdown file and returns a `MarkdownDocument` with `nodes` and `headings`.
 
-`markdown_text(text)`
+`markdown_text(text: str) -> MarkdownDocument`
 
 Parses a Markdown string and returns a `MarkdownDocument`.
 
-`markdown_toc(document, title="On this page", collapsible=False, open=False)`
+`markdown_toc(document: MarkdownDocument, title: str = "On this page", collapsible: bool = False, open: bool = False) -> Node`
 
 Builds a table of contents from level-2 and level-3 headings.
 
@@ -548,26 +548,6 @@ section(
     class_="docs-layout",
 )
 ```
-
-### Builder Helpers
-
-Most sites should use the CLI, not these functions directly.
-
-`load_config(path=None)`
-
-Loads `site.py` or `index.py` into a `SiteConfig`.
-
-`build(config)`
-
-Builds a loaded site config.
-
-`serve(directory, host, port)`
-
-Serves a directory over HTTP. The CLI command `pysitegen serve` is the preferred entry point because it builds first and supports hot reload.
-
-`render_site(document, out_dir)`
-
-Renders one `Document` to an output directory and copies its registered assets.
 
 ## Developing PySiteGen Itself
 

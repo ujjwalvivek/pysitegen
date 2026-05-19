@@ -1,5 +1,5 @@
 graft tests
-global-exclude __pycache__
-global-exclude *.py[cod]
 prune website
 prune website/public
+global-exclude __pycache__
+global-exclude *.py[cod]
