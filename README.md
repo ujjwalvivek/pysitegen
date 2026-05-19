@@ -5,6 +5,9 @@
     <a href="https://pypi.org/project/pysitegen/"><img src="https://echopoint.ujjwalvivek.com/svg/badges/custom?bg=111111&badgeColor=0080ff&textColor=e8e8e8&border=0080c0&borderWidth=2&rx=0&px=2&py=2&logo=python&leftText=PyPi&rightText=latest" alt="PyPi badge"></a>
 </p>
 
+<img width="600" alt="pysitegen-showcase" src="https://cdn.ujjwalvivek.com/showcase/pysitegen.gif" />
+
+
 PySiteGen is a tiny static site generator for people who would rather compose HTML with Python without any runtime server, client framework, or hidden build graph. PySiteGen gives you primitives. The default visual taste is just a theme layer with terminal-dark aesthetics. It is practical. You write Python functions that return HTML nodes. PySiteGen renders them to static HTML and copies the assets you explicitly ask for.
 
 ## Why This Exists?
