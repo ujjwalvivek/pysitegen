@@ -1,8 +1,17 @@
 # pysitegen
 
-pysitegen is a tiny Python-authored static site generator. You write pages with Python primitives, choose a default terminal-dark theme, add optional behaviors, and build plain HTML, CSS, and JavaScript. The goal is to make the web comfortable to author from Python while keeping the output boring, inspectable, and easy to host anywhere.
+pysitegen is a tiny Python-authored static site generator. You write pages with Python primitives, choose a default terminal-dark theme, add optional behaviors, and build plain HTML, CSS, and JavaScript. 
 
-## What You Can Build
+## Why This Exists?
+
+- You see, my partner understands Python and web was a bit intimidating for them.
+- So, I abstracted just enough web, for this to not become a crutch.
+- And, build static sites with Python primitives.
+- Because, every Python framework felt ...heavier and too abstracted.
+- That's it. No "because I was tired of X, so I over-engineered this piece of crap Y".
+- The irony. 
+
+## What Can You Build?
 
 - Static landing pages
 - Personal portfolio and resume sites
@@ -13,8 +22,6 @@ pysitegen is a tiny Python-authored static site generator. You write pages with 
 The framework gives you primitives. Your project owns the structure.
 
 ## Project Layout
-
-A new site starts with a small, explicit structure:
 
 ```text
 
@@ -36,20 +43,18 @@ my-site/
 
 ## Build And Preview
 
-Install PySiteGen from PyPI:
-
 ```bash
 
+# Install PySiteGen from PyPI
 python -m pip install pysitegen
-```
 
-Create a new site:
-
-```bash
-
+# Create a new site
 pysitegen init my-site
 cd my-site
 pysitegen serve
+
+# static server without watching or browser reload
+pysitegen serve --no-reload
 ```
 
 That creates the starter project, builds it, watches for file changes, and reloads the browser tab automatically. Open:
@@ -63,43 +68,18 @@ Run a clean build from a site folder:
 
 ```bash
 
-pysitegen build
-```
-
-That deletes `public/` and rebuilds the configured pages. You can add a `site.py` later when the project needs multiple pages or custom output paths.
-
-Run a compile+build:
-
-```bash
-
+# delete `public/` and rebuild the configured pages
+# check Python files and clear the generated `__pycache__` directories
 pysitegen compile
 pysitegen build
 ```
-
-These commands check Python files and clears the generated `__pycache__` directories afterward. From a site folder it checks the site entry files and `pages/` when they exist. You can also pass explicit files or directories.
 
 Preview the generated site over HTTP:
 
 ```bash
 
-pysitegen serve --host 127.0.0.1 --port 8000
-```
-
-Open:
-
-```text
-
-http://127.0.0.1:8000/
-```
-
-HTTP preview avoids browser restrictions around scripts, modules, assets, and future fetch-based features. If you want to access the preview through a machine name or from another device on your network, bind to all interfaces, then open the host name or LAN address for that machine:
-
-```bash
-
 pysitegen serve --host 0.0.0.0 --port 8000
 ```
-
-Use `pysitegen serve --no-reload` when you want the plain static server without watching or browser reload.
 
 ## Your First Page
 
@@ -125,26 +105,17 @@ def build():
     )
 ```
 
-Save the page as `index.py` and run:
-
-```bash
-
-pysitegen build
-```
+Save the page as `index.py` and run `pysitegen build`.
 
 ## HTML Primitives
 
-The public package exports common HTML helpers:
+The public package exports common HTML helpers. Most helpers accept children first and attributes as keyword arguments:
 
 ```python
 
 from pysitegen import a, article, button, div, h1, h2, h3, img, li, p, section, tag, ul
-```
 
-Most helpers accept children first and attributes as keyword arguments:
-
-```python
-
+...
 section(
     h2("Selected Work"),
     p("A compact project list.", class_="muted"),
@@ -162,9 +133,7 @@ tag("input", name="email", type="email", placeholder="you@example.com")
 
 ## Project Files
 
-For a one-page site, `index.py` is enough.
-
-For multiple pages or custom output paths, add `site.py`:
+For a one-page site, `index.py` is enough. For multiple pages or custom output paths, add `site.py`:
 
 ```python
 
@@ -190,9 +159,7 @@ and return a `Document` created by `page(...)`.
 
 ## Assets
 
-There are two asset paths.
-
-Site-owned public files go in `static/`:
+There are two asset paths. Site-owned public files go in `static/`:
 
 ```bash
 
@@ -268,7 +235,7 @@ The default theme provides:
 - Controls like `button`, `tag`, `muted`, `eyebrow`, and `accent-text`
 - Documentation styles for Markdown-rendered pages
 
-You can override the look with page-specific CSS.
+You can override `any` look with page-specific CSS.
 
 ## SPA Behavior
 
@@ -307,6 +274,8 @@ The behavior:
 ## Visual Canvas
 
 pysitegen can render procedural canvas scenes from Python-authored scene data. The Python side describes the scene. The Substrate runtime is loaded from the CDN only when `canvas_background()` is used. This keeps generated projects small, but pages using this behavior need network access when they load.
+
+I know, a runtime dependency. Such is life.
 
 ```python
 
@@ -358,7 +327,7 @@ Animation is opt-in. `fps=0` renders a static frame. Positive values animate at 
 
 ## Markdown Documents
 
-pysitegen can render Markdown into `Node` trees. Markdown content still goes through the same renderer, escaping, theme, and asset pipeline.
+`pysitegen` can render Markdown into `Node` trees. Markdown content still goes through the same renderer, escaping, theme, and asset pipeline.
 
 ```python
 
@@ -389,9 +358,7 @@ It is intentionally small. For now, the value is that the output remains native 
 
 ## Build Configuration
 
-`site.py` owns the pages that become part of the generated site.
-
-For a one-page site, you can skip `site.py` and use `index.py` directly:
+`site.py` owns the pages that become part of the generated site. For a one-page site, you can skip `site.py` and use `index.py` directly:
 
 ```python
 
@@ -406,10 +373,7 @@ def build():
     )
 ```
 
-When `site.py` is absent, `pysitegen build` and `pysitegen serve` use
-`index.py`.
-
-For a larger site, add `site.py`:
+When `site.py` is absent, `pysitegen build` and `pysitegen serve` use `index.py`. For a larger site, add `site.py`:
 
 ```python
 
@@ -423,7 +387,7 @@ SITE = {
 }
 ```
 
-Add a new page by appending a new `(source, output)` pair. The configured static folder is copied directly into `public/` before pages are rendered. This is the Zola-like path for files that should exist at stable public URLs.
+Add a new page by appending a new `(source, output)` pair. The configured static folder is copied directly into `public/` before pages are rendered. This is the `Zola-like` path for files that should exist at stable public URLs.
 
 ## CLI
 
@@ -434,20 +398,14 @@ pysitegen build [--config site.py]
 pysitegen serve [--config site.py] [--host 127.0.0.1] [--port 8000] [--no-reload]
 pysitegen compile [paths...]
 pysitegen --version
-```
 
-`build` and `serve` look for `site.py`, then `index.py`.
-
-`serve` rebuilds when source files change and injects a temporary reload script into served HTML responses. Generated files on disk stay normal static output.
-
-`compile` runs Python bytecode checks and removes generated `__pycache__` directories afterward.
-
-Useful checks from the PySiteGen source repository:
-
-```bash
-
+# Useful checks from the PySiteGen source repository
 pysitegen compile src website
 ```
+
+- `build` and `serve` look for `site.py`, then `index.py`.
+- `serve` rebuilds when source files change and injects a temporary reload script into served HTML responses. Generated files on disk stay normal static output.
+- `compile` runs Python bytecode checks and removes generated `__pycache__` directories afterward.
 
 ## API Reference
 
@@ -676,7 +634,7 @@ Most users should install from PyPI:
 python -m pip install pysitegen
 ```
 
-If you are working on the PySiteGen package source, clone the repository and use an editable install from the repo root:
+If you are working on the PySiteGen package source, clone the repository (`contains the package and the website source`) and use an editable install from the repo root:
 
 ```bash
 
@@ -684,21 +642,6 @@ python -m pip install -e .[dev]
 python -m pytest
 ```
 
-This repository contains the package and the website source:
-
-```text
-
-pysitegen/
-  pyproject.toml
-  src/
-    pysitegen/
-  website/
-    index.py
-    content/docs/getting-started.md
-    assets/
-    static/
-```
-
 ## What now?
 
-The website is intentionally just another PySiteGen consumer. It imports from `pysitegen` like any other site. The current version is small on purpose. It is a foundation for testing how far Python-authored websites can go while still producing normal static files.
+The website is intentionally just another PySiteGen consumer. It imports from `pysitegen` like any other site. The current version is small on purpose.
