@@ -17,6 +17,7 @@ The framework gives you primitives. Your project owns the structure.
 A new site starts with a small, explicit structure:
 
 ```text
+
 my-site/
   index.py
   assets/
@@ -38,12 +39,14 @@ my-site/
 Install PySiteGen from PyPI:
 
 ```bash
+
 python -m pip install pysitegen
 ```
 
 Create a new site:
 
 ```bash
+
 pysitegen init my-site
 cd my-site
 pysitegen serve
@@ -52,12 +55,14 @@ pysitegen serve
 That creates the starter project, builds it, watches for file changes, and reloads the browser tab automatically. Open:
 
 ```text
+
 http://127.0.0.1:8000/
 ```
 
 Run a clean build from a site folder:
 
 ```bash
+
 pysitegen build
 ```
 
@@ -66,6 +71,7 @@ That deletes `public/` and rebuilds the configured pages. You can add a `site.py
 Run a compile+build:
 
 ```bash
+
 pysitegen compile
 pysitegen build
 ```
@@ -75,18 +81,21 @@ These commands check Python files and clears the generated `__pycache__` directo
 Preview the generated site over HTTP:
 
 ```bash
+
 pysitegen serve --host 127.0.0.1 --port 8000
 ```
 
 Open:
 
 ```text
+
 http://127.0.0.1:8000/
 ```
 
 HTTP preview avoids browser restrictions around scripts, modules, assets, and future fetch-based features. If you want to access the preview through a machine name or from another device on your network, bind to all interfaces, then open the host name or LAN address for that machine:
 
 ```bash
+
 pysitegen serve --host 0.0.0.0 --port 8000
 ```
 
@@ -97,6 +106,7 @@ Use `pysitegen serve --no-reload` when you want the plain static server without 
 A page is a Python module with a `build()` function that returns a `Document`.
 
 ```python
+
 from pysitegen import a, default_dark, h1, p, page, section
 
 
@@ -118,6 +128,7 @@ def build():
 Save the page as `index.py` and run:
 
 ```bash
+
 pysitegen build
 ```
 
@@ -126,12 +137,14 @@ pysitegen build
 The public package exports common HTML helpers:
 
 ```python
+
 from pysitegen import a, article, button, div, h1, h2, h3, img, li, p, section, tag, ul
 ```
 
 Most helpers accept children first and attributes as keyword arguments:
 
 ```python
+
 section(
     h2("Selected Work"),
     p("A compact project list.", class_="muted"),
@@ -143,6 +156,7 @@ section(
 Use `tag()` when a primitive does not exist yet:
 
 ```python
+
 tag("input", name="email", type="email", placeholder="you@example.com")
 ```
 
@@ -153,6 +167,7 @@ For a one-page site, `index.py` is enough.
 For multiple pages or custom output paths, add `site.py`:
 
 ```python
+
 SITE = {
     "output": "public",
     "static": "static",
@@ -166,6 +181,7 @@ SITE = {
 Each page module must define:
 
 ```python
+
 def build():
     ...
 ```
@@ -179,6 +195,7 @@ There are two asset paths.
 Site-owned public files go in `static/`:
 
 ```bash
+
 static/
   favicon.png
   robots.txt
@@ -187,6 +204,7 @@ static/
 They are copied directly:
 
 ```bash
+
 public/favicon.png
 public/robots.txt
 ```
@@ -194,6 +212,7 @@ public/robots.txt
 Page assets go through `asset(...)`:
 
 ```python
+
 from pathlib import Path
 from pysitegen import asset, default_dark, h1, page, section
 
@@ -213,6 +232,7 @@ def build():
 Use `asset(source, target)` to copy files into the generated output.
 
 ```python
+
 from pysitegen import asset, page
 
 page(
@@ -233,6 +253,7 @@ The renderer copies each source file to the requested target under the output di
 The default theme is intentionally opinionated about taste but not page architecture.
 
 ```python
+
 from pysitegen import default_dark
 
 page(..., theme=default_dark())
@@ -254,6 +275,7 @@ You can override the look with page-specific CSS.
 The `spa()` behavior adds hash-route navigation.
 
 ```python
+
 from pysitegen import page, section, spa
 
 page(
@@ -269,6 +291,7 @@ page(
 Links opt in with `data_route`:
 
 ```python
+
 a("Docs", href="#docs", data_route="docs")
 ```
 
@@ -286,6 +309,7 @@ The behavior:
 pysitegen can render Markdown into `Node` trees. Markdown content still goes through the same renderer, escaping, theme, and asset pipeline.
 
 ```python
+
 from pysitegen import markdown_file, markdown_toc
 
 doc = markdown_file(ROOT / "content" / "docs" / "getting-started.md")
@@ -318,6 +342,7 @@ It is intentionally small. For now, the value is that the output remains native 
 For a one-page site, you can skip `site.py` and use `index.py` directly:
 
 ```python
+
 from pysitegen import default_dark, h1, p, page, section
 
 
@@ -335,6 +360,7 @@ When `site.py` is absent, `pysitegen build` and `pysitegen serve` use
 For a larger site, add `site.py`:
 
 ```python
+
 SITE = {
     "output": "public",
     "static": "static",
@@ -350,6 +376,7 @@ Add a new page by appending a new `(source, output)` pair. The configured static
 ## CLI
 
 ```bash
+
 pysitegen init [path]
 pysitegen build [--config site.py]
 pysitegen serve [--config site.py] [--host 127.0.0.1] [--port 8000] [--no-reload]
@@ -366,20 +393,193 @@ pysitegen --version
 Useful checks from the PySiteGen source repository:
 
 ```bash
+
 pysitegen compile src website
 ```
+
+## API Reference
+
+Import from the public package facade:
+
+```python
+
+from pysitegen import page, section, h1, p, a, asset, default_dark
+```
+
+Avoid importing from internal modules such as `pysitegen.theme`, `pysitegen.md`, or `pysitegen.renderer` in normal site code. Those modules exist, but the package root is the stable authoring surface.
+
+### Page And Document
+
+`page(*body, title, description=None, lang="en", assets=(), stylesheets=(), scripts=(), module_scripts=(), behaviors=(), head=(), theme=None)`
+
+Creates a `Document`. A page module should return this from `build()`.
+
+```python
+
+from pysitegen import h1, page, section
+
+def build():
+    return page(
+        section(h1("Hello")),
+        title="Hello",
+        description="A static page.",
+    )
+```
+
+`Document`
+
+The object returned by `page(...)`. The builder expects every page module's `build()` function to return a `Document`.
+
+### HTML Primitives
+
+`div(...)`, `section(...)`, `article(...)`, `main(...)`, `nav(...)`, `h1(...)`, `h2(...)`, `h3(...)`, `p(...)`, `a(...)`, `button(...)`, `img(...)`, `ul(...)`, `li(...)`, `span(...)`
+
+Convenience helpers for common HTML tags. Children come first. Attributes are keyword arguments.
+
+```python
+
+from pysitegen import a, h2, p, section
+
+section(
+    h2("Docs"),
+    p("Generated from Python."),
+    a("Read more", href="#more", class_="button"),
+    class_="container stack",
+)
+```
+
+`tag(tag_name, *children, **attrs)`
+
+Creates any HTML element when there is no dedicated helper.
+
+```python
+
+from pysitegen import tag
+
+tag("input", type="email", name="email", aria_label="Email")
+```
+
+Attribute names are normalized:
+
+- `class_` becomes `class`
+- `aria_label` becomes `aria-label`
+- `data_route_panel` becomes `data-route-panel`
+- `True` renders a boolean attribute
+- `False` and `None` omit the attribute
+
+### Assets
+
+`asset(source, target)`
+
+Registers a file to copy during rendering. `source` is the file on disk. `target` is the path inside the generated output directory.
+
+```python
+
+from pathlib import Path
+from pysitegen import asset, page
+
+ROOT = Path(__file__).resolve().parent
+
+page(
+    ...,
+    assets=[asset(ROOT / "assets" / "index.css", "assets/index.css")],
+    stylesheets=["assets/index.css"],
+)
+```
+
+Use `static/` for files that should copy directly to the root of `public/`, such as `favicon.png` or `robots.txt`. Use `asset(...)` for files explicitly required by a page.
+
+### Theme And Behavior
+
+`default_dark()`
+
+Returns the bundled terminal-dark theme. It adds `pysitegen.css` to the page asset list and stylesheet list.
+
+```python
+
+from pysitegen import default_dark, page
+
+page(..., title="Themed", theme=default_dark())
+```
+
+`spa()`
+
+Adds hash-route behavior and copies the bundled `pysitegen-spa.js` script.
+
+```python
+
+from pysitegen import main, page, section, spa
+
+page(
+    main(
+        section(..., data_route_panel="home", class_="route-panel active"),
+        section(..., data_route_panel="docs", class_="route-panel"),
+    ),
+    title="Routes",
+    behaviors=[spa()],
+)
+```
+
+### Markdown
+
+`markdown_file(path)`
+
+Reads a Markdown file and returns a `MarkdownDocument` with `nodes` and `headings`.
+
+`markdown_text(text)`
+
+Parses a Markdown string and returns a `MarkdownDocument`.
+
+`markdown_toc(document, title="On this page")`
+
+Builds a table of contents from level-2 and level-3 headings.
+
+```python
+
+from pysitegen import article, markdown_file, markdown_toc, section
+
+doc = markdown_file("content/docs/getting-started.md")
+
+section(
+    markdown_toc(doc),
+    article(doc.nodes, class_="docs-content"),
+    class_="docs-layout",
+)
+```
+
+### Builder Helpers
+
+Most sites should use the CLI, not these functions directly.
+
+`load_config(path=None)`
+
+Loads `site.py` or `index.py` into a `SiteConfig`.
+
+`build(config)`
+
+Builds a loaded site config.
+
+`serve(directory, host, port)`
+
+Serves a directory over HTTP. The CLI command `pysitegen serve` is the preferred entry point because it builds first and supports hot reload.
+
+`render_site(document, out_dir)`
+
+Renders one `Document` to an output directory and copies its registered assets.
 
 ## Developing PySiteGen Itself
 
 Most users should install from PyPI:
 
 ```bash
+
 python -m pip install pysitegen
 ```
 
 If you are working on the PySiteGen package source, clone the repository and use an editable install from the repo root:
 
 ```bash
+
 python -m pip install -e .[dev]
 python -m pytest
 ```
@@ -387,6 +587,7 @@ python -m pytest
 This repository contains the package and the website source:
 
 ```text
+
 pysitegen/
   pyproject.toml
   src/

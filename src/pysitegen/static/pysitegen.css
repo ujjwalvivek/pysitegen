@@ -1,9 +1,10 @@
 @font-face {
     font-family: "Monaspace Neon";
-    src: url("https://cdn.ujjwalvivek.com/fonts/Monaspace/Neon/Var.woff2") format("woff2");
+    src: url("https://cdn.ujjwalvivek.com/fonts/Monaspace/Neon/Var.woff2")
+        format("woff2");
     font-weight: 200 900;
     font-style: normal;
-    font-display: swap;
+    font-display: block;
 }
 
 :root {
@@ -262,14 +263,16 @@ pre {
 
 .docs-layout {
     display: grid;
-    grid-template-columns: minmax(200px, 0.28fr) minmax(0, 0.72fr);
+    grid-template-columns: minmax(200px, 0.2fr) minmax(0, 0.8fr);
     gap: var(--space-5);
     align-items: start;
+    padding: 72px;
 }
 
 .docs-toc {
     position: sticky;
-    top: calc(var(--space-5) + 80px);
+    top: calc(var(--space-5) + 0px);
+    display: block;
     padding: var(--space-3);
     background: var(--bg-raised);
     border: 1px solid var(--line);
@@ -380,6 +383,7 @@ pre {
 @media (max-width: 900px) {
     .docs-layout {
         grid-template-columns: 1fr;
+        padding: 36px 0;
     }
 
     .docs-toc {
