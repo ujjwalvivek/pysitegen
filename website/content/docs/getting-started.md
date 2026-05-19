@@ -474,7 +474,10 @@ Avoid importing from internal modules such as `pysitegen.theme`, `pysitegen.md`,
 
 ### Page And Document
 
-`page(*body, title: str, description: str | None = None, lang: str = "en", assets=(), stylesheets=(), scripts=(), module_scripts=(), behaviors=(), head=(), theme: Theme | None = None) -> Document`
+```python
+
+page(*body, title: str, description: str | None = None, lang: str = "en", assets=(), stylesheets=(), scripts=(), module_scripts=(), behaviors=(), head=(), theme: Theme | None = None) -> Document
+```
 
 Creates a `Document`. A page module should return this from `build()`.
 
@@ -496,7 +499,29 @@ The object returned by `page(...)`. The builder expects every page module's `bui
 
 ### HTML Primitives
 
-`div(*children, **attrs) -> Node`, `section(*children, **attrs) -> Node`, `article(*children, **attrs) -> Node`, `main(*children, **attrs) -> Node`, `nav(*children, **attrs) -> Node`, `h1(*children, **attrs) -> Node`, `h2(*children, **attrs) -> Node`, `h3(*children, **attrs) -> Node`, `p(*children, **attrs) -> Node`, `a(*children, **attrs) -> Node`, `button(*children, **attrs) -> Node`, `canvas(**attrs) -> Node`, `footer(*children, **attrs) -> Node`, `header(*children, **attrs) -> Node`, `hr(**attrs) -> Node`, `img(**attrs) -> Node`, `li(*children, **attrs) -> Node`, `script(*children, **attrs) -> Node`, `span(*children, **attrs) -> Node`, `ul(*children, **attrs) -> Node`
+```python
+
+div(*children, **attrs) -> Node
+section(*children, **attrs) -> Node
+article(*children, **attrs) -> Node
+main(*children, **attrs) -> Node
+nav(*children, **attrs) -> Node
+h1(*children, **attrs) -> Node
+h2(*children, **attrs) -> Node
+h3(*children, **attrs) -> Node
+p(*children, **attrs) -> Node
+a(*children, **attrs) -> Node
+button(*children, **attrs) -> Node
+canvas(**attrs) -> Node
+footer(*children, **attrs) -> Node
+header(*children, **attrs) -> Node
+hr(**attrs) -> Node
+img(**attrs) -> Node
+li(*children, **attrs) -> Node
+script(*children, **attrs) -> Node
+span(*children, **attrs) -> Node
+ul(*children, **attrs) -> Node
+```
 
 Convenience helpers for common HTML tags. Children come first. Attributes are keyword arguments.
 

@@ -1,14 +1,15 @@
-## PySiteGen v1.1.0
+## PySiteGen v1.2.0
 
 ### Highlights
 
-- Tightened the root `pysitegen` public API.
-  - The root package now focuses on the authoring facade: page primitives, assets, themes, behaviors, and Markdown helpers.
-  - Builder/render helpers are no longer exported from the root package.
-  - CLI commands remain the supported build/serve/init/compile workflow.
-- Updated API documentation with clearer, typed signatures for stable authoring helpers.
-- Updated starter/docs guidance around `pysitegen serve`.
-- Added tests for root public API boundaries
+- Fixed local source-tree `--version` behavior so it reads the project version from `pyproject.toml`.
+- Added visual scene helpers:
+  - `visual_scene(...)`
+  - `visual_canvas(...)`
+  - `canvas_background(...)`
+- `canvas_background()` now loads the Substrate runtime from CDN only when a page opts in. No large canvas runtime is bundled.
+- Added docs and tests for the visual canvas API.
+- Canvas scenes support Substrate primitives such as `background`, `grid`, `particles`, `nodes`, `streams`, `scanlines`, `topography`, `vignette`, and [!more](https://cdn.ujjwalvivek.com/scripts/substrate/latest/readme.md).
 
 ### Install
 
