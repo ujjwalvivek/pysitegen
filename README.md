@@ -17,24 +17,9 @@ Works for docs sites, small product or project pages, personal sites, link hubs,
 
 ## Install
 
-From this repo during development:
-
-```powershell
-python -m pip install -e .\pysitegen
-pysitegen --version
-```
-
-On Linux/macOS from inside the repo:
-
 ```bash
-python -m pip install -e .
+python -m pip install pysitegen
 pysitegen --version
-```
-
-If `pysitegen` is not found in a new terminal, activate the virtual environment where you installed it:
-
-```bash
-source .venv/bin/activate
 ```
 
 ## Start A Site
@@ -74,14 +59,22 @@ pysitegen serve --host 127.0.0.1 --port 8000
 
 ## This Repo
 
-This repository contains the package and the real PySiteGen website:
+This repository contains the package source, tests, and the real PySiteGen website:
 
 ```text
 src/pysitegen/  package source and bundled framework assets
+tests/          fixture-based behavior tests
 website/        PySiteGen website source
 ```
 
-Build and Serve:
+Develop locally:
+
+```bash
+python -m pip install -e .[dev]
+python -m pytest
+```
+
+Build and serve the website:
 
 ```bash
 cd website
