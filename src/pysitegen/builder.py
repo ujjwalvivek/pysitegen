@@ -3,12 +3,14 @@ from __future__ import annotations
 import argparse
 import compileall
 import http.server
-import importlib.util
 import importlib.metadata
+import importlib.util
 import shutil
 import sys
+import threading
+import time
+import urllib.parse
 from dataclasses import dataclass
-from functools import partial
 from pathlib import Path
 from types import ModuleType
 from typing import Iterable
@@ -18,6 +20,26 @@ from .renderer import render_site
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parent
+LIVE_RELOAD_PATH = "/__pysitegen/reload"
+LIVE_RELOAD_SCRIPT = """
+<script>
+(() => {
+  const events = new EventSource("/__pysitegen/reload");
+  events.onmessage = () => window.location.reload();
+})();
+</script>
+""".strip()
+WATCH_IGNORED_DIRS = {
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".tox",
+    ".venv",
+    "__pycache__",
+    "node_modules",
+}
 STARTER_INDEX = '''from pathlib import Path
 
 from pysitegen import a, asset, default_dark, h1, h2, p, page, section, tag
@@ -74,6 +96,9 @@ Preview locally:
 pysitegen serve --host 127.0.0.1 --port 8000
 ```
 
+`serve` rebuilds on file changes and reloads the browser. Use `--no-reload` for
+the plain static server.
+
 Check Python files and clean generated cache files:
 
 ```powershell
@@ -105,6 +130,33 @@ class SiteConfig:
     pages: list[PageSpec]
 
 
+class ServeState:
+    def __init__(self, config: SiteConfig):
+        self.config = config
+        self.version = 0
+        self.condition = threading.Condition()
+
+    @property
+    def output(self) -> Path:
+        with self.condition:
+            return self.config.output
+
+    def mark_built(self, config: SiteConfig) -> None:
+        with self.condition:
+            self.config = config
+            self.version += 1
+            self.condition.notify_all()
+
+    def current_version(self) -> int:
+        with self.condition:
+            return self.version
+
+    def wait_for_next_version(self, version: int, timeout: float) -> int:
+        with self.condition:
+            self.condition.wait_for(lambda: self.version != version, timeout)
+            return self.version
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build, serve, verify, and start pysitegen sites.")
     parser.add_argument("--version", action="version", version=f"%(prog)s {package_version()}")
@@ -120,6 +172,11 @@ def main() -> None:
     serve_parser.add_argument("--config", help="Config or page file. Defaults to site.py, then index.py")
     serve_parser.add_argument("--host", default="127.0.0.1", help="Host for serve")
     serve_parser.add_argument("--port", type=int, default=8000, help="Port for serve")
+    serve_parser.add_argument(
+        "--no-reload",
+        action="store_true",
+        help="Disable rebuild-on-save and browser reload while serving",
+    )
 
     compile_parser = subparsers.add_parser("compile", help="Compile-check Python files and clean caches")
     compile_parser.add_argument("paths", nargs="*", help="Files or directories to check")
@@ -141,13 +198,11 @@ def run_command(args: argparse.Namespace, parser: argparse.ArgumentParser) -> No
         compile_project(args.paths)
         return
 
-    config = load_config(args.config)
-
     if args.command == "build":
+        config = load_config(args.config)
         build(config)
     else:
-        build(config)
-        serve(config.output, args.host, args.port)
+        serve_site(args.config, args.host, args.port, reload=not args.no_reload)
 
 
 def package_version() -> str:
@@ -164,6 +219,7 @@ def load_config(path: str | Path | None = None) -> SiteConfig:
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
 
+    clear_project_modules(root)
     module = load_module(config_path)
     raw = getattr(module, "SITE", None)
     if raw is None and hasattr(module, "build"):
@@ -257,6 +313,7 @@ def copy_starter_file(source: Path, target: Path) -> None:
 
 
 def build(config: SiteConfig) -> None:
+    clear_project_modules(config.root)
     clean_output(config)
     copy_static(config)
 
@@ -266,7 +323,7 @@ def build(config: SiteConfig) -> None:
             html_path = render_site(document, page.output)
             print(f"Generated {html_path.relative_to(config.root)}")
     finally:
-        clean_pycache([config.root, config.package_root])
+        clean_pycache([config.root])
 
 
 def compile_project(paths: Iterable[str | Path] = ()) -> None:
@@ -385,15 +442,167 @@ def copy_tree_contents(source: Path, target: Path) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(item, destination)
 
+
+def clear_project_modules(root: Path) -> None:
+    resolved_root = root.resolve()
+    resolved_package_root = PACKAGE_ROOT.resolve()
+
+    for name, module in list(sys.modules.items()):
+        module_file = getattr(module, "__file__", None)
+        if not module_file:
+            continue
+
+        try:
+            module_path = Path(module_file).resolve()
+        except OSError:
+            continue
+
+        if not is_relative_to(module_path, resolved_root):
+            continue
+
+        if is_relative_to(module_path, resolved_package_root):
+            continue
+
+        sys.modules.pop(name, None)
+
+
+def is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return False
+
+    return True
+
+
 class PySiteGenHTTPServer(http.server.ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
 
-def serve(directory: Path, host: str, port: int) -> None:
-    handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(directory))
+
+class PySiteGenRequestHandler(http.server.SimpleHTTPRequestHandler):
+    def __init__(
+        self,
+        *args,
+        state: ServeState | None = None,
+        directory: str | None = None,
+        **kwargs,
+    ):
+        self.state = state
+        if state is not None:
+            directory = str(state.output)
+
+        super().__init__(*args, directory=directory, **kwargs)
+
+    def do_GET(self) -> None:
+        parsed = urllib.parse.urlparse(self.path)
+
+        if parsed.path == LIVE_RELOAD_PATH and self.state is not None:
+            self.serve_reload_events()
+            return
+
+        html_path = self.resolve_html_path(parsed.path)
+        if html_path is not None and self.state is not None:
+            self.serve_html_with_reload(html_path)
+            return
+
+        super().do_GET()
+
+    def resolve_html_path(self, request_path: str) -> Path | None:
+        target = Path(self.translate_path(request_path)).resolve()
+        root = Path(self.directory).resolve()
+
+        if not is_relative_to(target, root):
+            return None
+
+        if target.is_dir():
+            target = target / "index.html"
+
+        if target.is_file() and target.suffix.lower() == ".html":
+            return target
+
+        return None
+
+    def serve_html_with_reload(self, path: Path) -> None:
+        html = path.read_text(encoding="utf-8")
+        body = inject_live_reload(html).encode("utf-8")
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+
+        if self.command != "HEAD":
+            self.wfile.write(body)
+
+    def serve_reload_events(self) -> None:
+        assert self.state is not None
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "keep-alive")
+        self.end_headers()
+
+        version = self.state.current_version()
+
+        try:
+            self.wfile.write(b": connected\n\n")
+            self.wfile.flush()
+
+            while True:
+                next_version = self.state.wait_for_next_version(version, timeout=15)
+                if next_version == version:
+                    self.wfile.write(b": keepalive\n\n")
+                    self.wfile.flush()
+                    continue
+
+                version = next_version
+                self.wfile.write(f"data: {version}\n\n".encode("utf-8"))
+                self.wfile.flush()
+        except OSError:
+            return
+
+
+def serve_site(
+    config_path: str | Path | None,
+    host: str,
+    port: int,
+    reload: bool = True,
+) -> None:
+    config = load_config(config_path)
+    build(config)
+
+    state = ServeState(config) if reload else None
+    stop_event = threading.Event()
+
+    if state is not None:
+        watcher = threading.Thread(
+            target=watch_and_rebuild,
+            args=(config_path, state, stop_event),
+            daemon=True,
+        )
+        watcher.start()
+
+    try:
+        serve(config.output, host, port, state=state)
+    finally:
+        stop_event.set()
+
+
+def serve(directory: Path, host: str, port: int, state: ServeState | None = None) -> None:
+    def handler(*args, **kwargs):
+        return PySiteGenRequestHandler(
+            *args,
+            state=state,
+            directory=str(directory),
+            **kwargs,
+        )
 
     with PySiteGenHTTPServer((host, port), handler) as server:
-        print(f"Serving {directory} at http://{host}:{port}/")
+        suffix = " with hot reload" if state is not None else ""
+        print(f"Serving {directory} at http://{host}:{port}/{suffix}")
         try:
             server.serve_forever()
         except KeyboardInterrupt:
@@ -401,6 +610,93 @@ def serve(directory: Path, host: str, port: int) -> None:
         finally:
             server.shutdown()
             server.server_close()
+
+
+def watch_and_rebuild(
+    config_path: str | Path | None,
+    state: ServeState,
+    stop_event: threading.Event,
+) -> None:
+    snapshot = snapshot_project(state.config.root, state.config.output)
+
+    while not stop_event.wait(0.35):
+        current = snapshot_project(state.config.root, state.config.output)
+        if current == snapshot:
+            continue
+
+        time.sleep(0.08)
+        current = snapshot_project(state.config.root, state.config.output)
+
+        try:
+            config = load_config(config_path)
+            build(config)
+        except RuntimeError as error:
+            print(f"pysitegen: rebuild failed: {error}", file=sys.stderr)
+            snapshot = current
+            continue
+
+        state.mark_built(config)
+        snapshot = snapshot_project(config.root, config.output)
+        print("Reloaded site.")
+
+
+def snapshot_project(root: Path, output: Path) -> dict[Path, tuple[int, int]]:
+    snapshot: dict[Path, tuple[int, int]] = {}
+    resolved_root = root.resolve()
+    resolved_output = output.resolve()
+
+    if not resolved_root.exists():
+        return snapshot
+
+    for path in resolved_root.rglob("*"):
+        if should_ignore_watch_path(path, resolved_root, resolved_output):
+            continue
+
+        if not path.is_file():
+            continue
+
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+
+        snapshot[path.resolve()] = (stat.st_mtime_ns, stat.st_size)
+
+    return snapshot
+
+
+def should_ignore_watch_path(path: Path, root: Path, output: Path) -> bool:
+    try:
+        resolved = path.resolve()
+    except OSError:
+        return True
+
+    if resolved == output or is_relative_to(resolved, output):
+        return True
+
+    try:
+        relative = resolved.relative_to(root)
+    except ValueError:
+        return True
+
+    if any(part in WATCH_IGNORED_DIRS for part in relative.parts):
+        return True
+
+    if any(part.endswith(".egg-info") for part in relative.parts):
+        return True
+
+    return False
+
+
+def inject_live_reload(html: str) -> str:
+    if LIVE_RELOAD_SCRIPT in html:
+        return html
+
+    marker = "</body>"
+    if marker in html:
+        return html.replace(marker, f"{LIVE_RELOAD_SCRIPT}\n{marker}", 1)
+
+    return f"{html}\n{LIVE_RELOAD_SCRIPT}\n"
 
 
 def load_module(path: Path) -> ModuleType:

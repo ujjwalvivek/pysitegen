@@ -1,3 +1,11 @@
+@font-face {
+    font-family: "Monaspace Neon";
+    src: url("https://cdn.ujjwalvivek.com/fonts/Monaspace/Neon/Var.woff2") format("woff2");
+    font-weight: 200 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 :root {
     color-scheme: dark;
     --bg: #0b0b0a;
@@ -20,8 +28,8 @@
     --space-6: 4rem;
     --radius: 6px;
     --max-width: 1120px;
-    --font-body: Inter, "Segoe UI", Arial, sans-serif;
-    --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+    --font-body: "Monaspace Neon";
+    --font-mono: "Monaspace Neon";
     --shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
 }
 

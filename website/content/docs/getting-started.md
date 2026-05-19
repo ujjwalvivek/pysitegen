@@ -49,7 +49,7 @@ cd my-site
 pysitegen serve
 ```
 
-That creates the starter project, builds it, and serves it locally. Open:
+That creates the starter project, builds it, watches for file changes, and reloads the browser tab automatically. Open:
 
 ```text
 http://127.0.0.1:8000/
@@ -89,6 +89,8 @@ HTTP preview avoids browser restrictions around scripts, modules, assets, and fu
 ```bash
 pysitegen serve --host 0.0.0.0 --port 8000
 ```
+
+Use `pysitegen serve --no-reload` when you want the plain static server without watching or browser reload.
 
 ## Your First Page
 
@@ -217,10 +219,10 @@ page(
     ...,
     assets=[
         asset("assets/site.css", "assets/site.css"),
-        asset("assets/site.js", "assets/site.js"),
+        asset("assets/index.js", "assets/index.js"),
     ],
     stylesheets=["assets/site.css"],
-    scripts=["assets/site.js"],
+    scripts=["assets/index.js"],
 )
 ```
 
@@ -350,12 +352,14 @@ Add a new page by appending a new `(source, output)` pair. The configured static
 ```bash
 pysitegen init [path]
 pysitegen build [--config site.py]
-pysitegen serve [--config site.py] [--host 127.0.0.1] [--port 8000]
+pysitegen serve [--config site.py] [--host 127.0.0.1] [--port 8000] [--no-reload]
 pysitegen compile [paths...]
 pysitegen --version
 ```
 
 `build` and `serve` look for `site.py`, then `index.py`.
+
+`serve` rebuilds when source files change and injects a temporary reload script into served HTML responses. Generated files on disk stay normal static output.
 
 `compile` runs Python bytecode checks and removes generated `__pycache__` directories afterward.
 

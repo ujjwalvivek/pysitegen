@@ -30,6 +30,8 @@ cd my-site
 pysitegen serve
 ```
 
+`serve` builds once, watches your site files, rebuilds when they change, and reloads the browser tab automatically.
+
 ## A Page
 
 ```python
@@ -56,6 +58,8 @@ Build it and serve it:
 pysitegen build
 pysitegen serve --host 127.0.0.1 --port 8000
 ```
+
+Use `pysitegen serve --no-reload` when you want the plain static server.
 
 ## This Repo
 

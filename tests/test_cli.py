@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from conftest import assert_failure, assert_success, run_pysitegen, write_file
+from pysitegen.builder import inject_live_reload, snapshot_project
 
 
 def test_compile_succeeds_and_removes_pycache(tmp_path: Path) -> None:
@@ -28,6 +29,34 @@ def test_version_works(tmp_path: Path) -> None:
 
     assert_success(result)
     assert "0.1.0" in result.stdout
+
+
+def test_serve_help_mentions_no_reload(tmp_path: Path) -> None:
+    result = run_pysitegen(tmp_path, "serve", "--help")
+
+    assert_success(result)
+    assert "--no-reload" in result.stdout
+
+
+def test_live_reload_script_injects_before_body() -> None:
+    html = "<!doctype html><html><body><h1>Hello</h1></body></html>"
+
+    result = inject_live_reload(html)
+
+    assert 'new EventSource("/__pysitegen/reload")' in result
+    assert result.index("EventSource") < result.index("</body>")
+
+
+def test_watch_snapshot_ignores_public_output(tmp_path: Path) -> None:
+    write_file(tmp_path / "index.py", "def build():\n    pass\n")
+    write_file(tmp_path / "assets" / "index.css", "body {}\n")
+    write_file(tmp_path / "public" / "index.html", "<h1>Generated</h1>\n")
+
+    snapshot = snapshot_project(tmp_path, tmp_path / "public")
+
+    assert tmp_path / "index.py" in snapshot
+    assert tmp_path / "assets" / "index.css" in snapshot
+    assert tmp_path / "public" / "index.html" not in snapshot
 
 
 def test_missing_site_py_and_index_py_gives_useful_error(tmp_path: Path) -> None:
